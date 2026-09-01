@@ -1,0 +1,39 @@
+name: Strategy C Backtest Workflow
+
+on:
+  push:
+    paths:
+      - 'strategy_c_backtest.py'
+      - '.github/workflows/strategy_c_backtest.yml'
+  workflow_dispatch: # 支持手动运行
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: pip install pandas numpy
+
+      - name: Run Backtest
+        env:
+          TZ: 'Asia/Shanghai'
+        run: python strategy_c_backtest.py
+
+      - name: Push Results
+        run: |
+          git config --local user.email "backtest-bot@github.com"
+          git config --local user.name "C-Backtest-System"
+          git add backtest_reports/
+          git commit -m "C Strategy Backtest Update: $(date +'%Y-%m-%d %H:%M')" || exit 0
+          git push

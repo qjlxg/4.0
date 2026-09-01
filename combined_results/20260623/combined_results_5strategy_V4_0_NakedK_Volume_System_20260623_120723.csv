@@ -1,0 +1,5 @@
+code,name,Strategy_Type,Close,TurnoverRate,RSI6,KDJ_J,Breakout_Pattern,Limit_Up_Today,Final_Score,Strategy_Rank
+002367,康力电梯,B_Low_Position_Start (低风险埋伏),5.98,4.45,77.63516865963037,89.37417613398257,False,True,345.47650053535517,2
+002068,黑猫股份,E_Leader_Restart (二次启动),11.5,12.41,74.05763299192249,87.89964716323567,True,True,1562.3938832305887,3
+603679,华体科技,E_Leader_Restart (二次启动),20.76,11.42,75.61023371293757,85.36424899631652,False,False,1467.89707730297,3
+003013,地铁设计,D_Strong_Breakout (高风险追涨/优化),16.98,6.45,74.86819508928399,72.75240685784277,True,False,531.1898441584699,4

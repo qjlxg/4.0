@@ -1,0 +1,4 @@
+code,name,Strategy_Type,Close,TurnoverRate,RSI6,KDJ_J,Breakout_Pattern,Limit_Up_Today,Final_Score,Strategy_Rank
+600271,航天信息,B_Low_Position_Start (低风险埋伏),6.86,1.92,62.31744346551376,59.117880170511725,False,False,119.64949145378642,2
+600604,市北高新,B_Low_Position_Start (低风险埋伏),4.2,1.74,66.99904105120582,55.68352905751283,False,False,116.57833142909813,2
+000524,岭南控股,E_Leader_Restart (二次启动),9.87,5.79,78.10090764572026,73.17722504988427,False,False,768.7472339568244,3

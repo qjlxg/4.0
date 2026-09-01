@@ -1,0 +1,3 @@
+code,name,Strategy_Type,Close,TurnoverRate,RSI6,KDJ_J,Breakout_Pattern,Limit_Up_Today,Final_Score,Strategy_Rank
+603012,创力集团,C_New_Strategy (最高共振),9.55,7.8,80.32369757245432,87.9756468797564,True,True,1002.4397457042301,0
+603758,秦安股份,B_Low_Position_Start (低风险埋伏),13.44,2.75,74.56784564633776,78.92156862745097,True,True,205.06157552742883,2

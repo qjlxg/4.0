@@ -1,0 +1,5 @@
+code,name,Strategy_Type,Close,TurnoverRate,RSI6,KDJ_J,Breakout_Pattern,Limit_Up_Today,Final_Score,Strategy_Rank
+002871,伟隆股份,A_Strong_Pullback (中风险接力),15.74,3.77,62.222676416093,49.8303746732916,False,False,2.971410309837665,1
+603057,紫燕食品,B_Low_Position_Start (低风险埋伏),18.97,1.99,78.38436647922276,84.73884067251358,False,False,155.9848892936533,2
+001317,三羊马,E_Leader_Restart (二次启动),53.5,71.27,71.43873176035962,79.12512743444822,False,False,8655.44530135341,3
+000546,金圆股份,E_Leader_Restart (二次启动),6.8,31.96,66.657665206497,71.6896324491261,False,False,3621.6442659993954,3

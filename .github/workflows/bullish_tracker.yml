@@ -1,0 +1,28 @@
+name: Bullish Strategy Analyzer
+
+on:
+  schedule:
+    - cron: '0 15 * * *' # 北京时间 23:00
+  workflow_dispatch:
+  push:
+    paths:
+      - 'bullish_strategy_analyzer.py'
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - run: pip install pandas
+      - name: Run Analyzer
+        run: python bullish_strategy_analyzer.py
+      - name: Push Results
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "AnalyzerBot"
+          git add strategy_performance_summary_*.csv signal_final_status_*.csv
+          git commit -m "Update Strategy Performance Analysis" || exit 0
+          git push

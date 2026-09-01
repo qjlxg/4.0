@@ -1,0 +1,3 @@
+code,name,Strategy_Type,Close,TurnoverRate,RSI6,KDJ_J,Breakout_Pattern,Limit_Up_Today,Final_Score,Strategy_Rank
+603055,台华新材,A_Strong_Pullback (中风险接力),8.65,1.23,62.10416558505099,58.59367947066531,False,False,1.1420834913312181,1
+600267,海正药业,D_Strong_Breakout (高风险追涨/优化),11.33,6.3,74.70593014235172,85.65020347761742,True,False,517.7120958864974,4

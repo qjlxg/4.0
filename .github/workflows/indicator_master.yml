@@ -1,0 +1,41 @@
+name: indicator_master
+
+on:
+  schedule:
+    # 每天北京时间 23:00 (UTC 15:00)
+    - cron: '0 15 * * *'
+  workflow_dispatch: # 支持在 Actions 页面手动点击运行
+  push:
+    paths:
+      - 'indicator_master.py'
+      - '.github/workflows/indicator_master.yml'
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          pip install pandas numpy
+
+      - name: Run Indicator Master
+        run: python indicator_master.py
+
+      - name: Commit and Push Results
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          # 检查文件是否有变化
+          if [[ -f "indicator_report.csv" ]]; then
+            git add indicator_report.csv
+            git commit -m "Auto update indicators [$(date +'%Y-%m-%d %H:%M')]" || echo "No changes to commit"
+            git push
+          fi

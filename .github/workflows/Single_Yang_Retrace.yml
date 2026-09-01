@@ -1,0 +1,38 @@
+name: Single_Yang_Retrace
+
+on:
+  schedule:
+    # 北京时间 15:30 对应 UTC 时间 07:30
+    - cron: '30 7 * * *'
+  push:
+    paths:
+      - 'Single_Yang_Retrace.py'
+      - '.github/workflows/Single_Yang_Retrace.yml'
+  workflow_dispatch: # 支持手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          pip install pandas numpy
+
+      - name: Run Screening Script
+        run: python Single_Yang_Retrace.py
+
+      - name: Commit and Push Results
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .
+          # 只有在有新文件生成时才执行commit
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto Update: Single Yang Retrace Results $(date +'%Y-%m-%d %H:%M')" && git push)

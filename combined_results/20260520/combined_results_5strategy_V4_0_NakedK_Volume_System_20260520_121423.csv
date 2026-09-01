@@ -1,0 +1,3 @@
+code,name,Strategy_Type,Close,TurnoverRate,RSI6,KDJ_J,Breakout_Pattern,Limit_Up_Today,Final_Score,Strategy_Rank
+002729,好利科技,E_Leader_Restart (二次启动),21.07,15.81,65.5219244908956,81.41016094282116,False,False,1761.0327645418013,3
+603677,奇精机械,E_Leader_Restart (二次启动),17.17,7.25,75.55289204145073,84.5411585142136,True,False,931.1893944108804,3

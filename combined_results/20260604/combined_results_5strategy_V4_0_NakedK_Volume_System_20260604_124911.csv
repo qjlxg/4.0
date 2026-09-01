@@ -1,0 +1,5 @@
+code,name,Strategy_Type,Close,TurnoverRate,RSI6,KDJ_J,Breakout_Pattern,Limit_Up_Today,Final_Score,Strategy_Rank
+603212,赛伍技术,A_Strong_Pullback (中风险接力),15.46,11.68,64.44652425000864,38.6618285777119,False,False,6.899834070066989,1
+603633,徕木股份,E_Leader_Restart (二次启动),9.06,20.19,69.73974921054447,60.384580746282865,False,False,2393.677412153518,3
+002700,万憬能源,E_Leader_Restart (二次启动),7.94,12.16,76.34475386713626,88.61071107664665,True,False,1578.1987519414408,3
+601918,新集能源,E_Leader_Restart (二次启动),10.97,7.67,77.94819035497758,87.26572202416128,False,False,1016.3664540385525,3
