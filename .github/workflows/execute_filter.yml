@@ -1,0 +1,62 @@
+name: 📈 Stock Screener & Push Results
+
+on:
+  # 1. 手动触发：可在GitHub仓库页面的Actions tab中手动运行
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Manual run reason'
+        required: false
+        default: 'Manual trigger by user'
+  
+  # 2. 自动触发：当关键文件（脚本、工作流文件、名称文件）变动时自动运行
+  push:
+    paths:
+      - 'execute_filter.py' # 脚本名称已更新
+      - '.github/workflows/stock_screener.yml'
+      - 'stock_names.csv' 
+      
+  # 3. 增加定时触发：每天北京时间 18:00
+  # 北京时间 18:00 对应 UTC 时间 10:00 (18 - 8 = 10)
+  schedule:
+    - cron: '0 15 * * *' 
+      
+# 设置默认 shell 为 bash
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  run_and_push_screening:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: ⚙️ Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pytz
+      
+      # 🚀 运行股票筛选脚本
+      - name: 🚀 Run stock screening script (execute_filter.py)
+        run: python execute_filter.py
+        
+      # 💾 提交并推送结果到仓库
+      - name: 💾 Commit and Push results
+        # 使用 stefanzweifel/git-auto-commit-action 自动处理 git 提交和推送
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          # 只追踪和推送输出目录下的CSV文件
+          file_pattern: 'screener_results/**/*.csv' 
+          commit_message: '🤖 Auto: Add latest stock screening results'
+          commit_user_name: GitHub Actions Bot
+          commit_user_email: actions@github.com
+          # 确保推送到仓库，而不是作为工件保存
+          push_options: '--force'

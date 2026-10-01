@@ -1,0 +1,3 @@
+code,name,Strategy_Type,Close,TurnoverRate,RSI6,KDJ_J,Breakout_Pattern,Limit_Up_Today,Final_Score,Strategy_Rank
+002828,贝肯能源,E_Leader_Restart (二次启动),11.87,20.88,75.01404004722481,86.02327219645653,True,False,2662.6983655162917,3
+605377,华旺科技,E_Leader_Restart (二次启动),9.67,5.35,65.87296563041004,90.36141404562451,False,False,599.1146224085793,3

@@ -1,0 +1,3 @@
+code,name,Strategy_Type,Close,TurnoverRate,RSI6,KDJ_J,Breakout_Pattern,Limit_Up_Today,Final_Score,Strategy_Rank
+600906,财达证券,B_Low_Position_Start (低风险埋伏),6.74,4.72,74.00121879112967,71.14161220043582,False,False,349.28575269413204,2
+601958,金钼股份,E_Leader_Restart (二次启动),24.41,3.9,76.59956896312913,93.25387281451276,True,False,507.8551422255461,3

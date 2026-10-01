@@ -1,0 +1,4 @@
+code,name,Strategy_Type,Close,TurnoverRate,RSI6,KDJ_J,Breakout_Pattern,Limit_Up_Today,Final_Score,Strategy_Rank
+601700,风范股份,E_Leader_Restart (二次启动),7.08,23.82,74.86314807793946,83.56117449549456,False,True,3031.50831826808,3
+002302,西部建设,E_Leader_Restart (二次启动),5.09,2.92,71.34048001058126,77.14876338132163,False,False,354.13414277252537,3
+603896,寿仙谷,E_Leader_Restart (二次启动),15.35,2.28,79.77005759840202,86.90070329941099,True,False,309.1887432514062,3

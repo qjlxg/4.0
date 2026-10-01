@@ -1,0 +1,104 @@
+name: 📈 -4_V4.0
+
+# 定义触发条件
+on:
+  # 1. 每日定时运行触发 (UTC 10:00)
+  schedule:
+    - cron: '0 0 * * *' 
+    
+  # 2. 手动运行触发
+  workflow_dispatch:
+  
+  # 3. 当脚本或工作流文件发生变动时自动运行触发
+  push:
+    branches:
+      - main
+    paths:
+      - 'stock_analyzer.V4.0.py'
+      - '.github/workflows/stock_analyzer.V4.0.yml'
+      
+# 设置环境变量，强制使用上海时区
+env:
+  TZ: Asia/Shanghai
+  OUTPUT_DIR_BASE: combined_results
+
+jobs:
+  analyze_and_push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. 检出代码
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # 必须检出所有历史，以确保能找到历史 Combined_results 目录中的输入文件
+          fetch-depth: 0
+
+      # 2. 设置 Python 环境
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # 3. 安装依赖
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pandas pytz pandas-ta
+
+      # 4. 运行分析脚本
+      - name: Run stock analysis script
+        run: |
+          # 检查必要的历史数据目录
+          if [ ! -d stock_data ]; then
+            echo "::error file=stock_data::Stock data directory 'stock_data' not found. Please create this directory and place historical CSV files inside."
+            exit 1
+          fi
+          
+          # 运行脚本
+          python stock_analyzer.V4.0.py
+          
+      # 5. 配置 Git
+      - name: Configure Git for commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+      # 6. 提交并推送结果到仓库 (使用 stash 和 rebase 安全解决冲突)
+      - name: Commit and Push results
+        run: |
+          # 获取当前上海日期
+          DATE_SHANGHAI=$(TZ='Asia/Shanghai' date +%Y%m%d)
+          RESULT_PATH="${OUTPUT_DIR_BASE}/${DATE_SHANGHAI}"
+          
+          # 检查目录是否存在且内部是否有新的时间戳文件
+          if [ ! -d "$RESULT_PATH" ] || [ -z "$(find $RESULT_PATH -type f -name 'combined_results_*.csv')" ]; then
+            echo "No new time-stamped results found in ${RESULT_PATH}. Skipping commit."
+            exit 0
+          fi
+          
+          # 确保新文件被添加到暂存区
+          git add "${OUTPUT_DIR_BASE}"
+          
+          # 检查是否有需要提交的更改
+          if ! git diff --cached --exit-code; then
+            
+            # 关键修复：1. 将本地的更改（即新的结果文件）暂存起来
+            git stash push -m "Stash analysis results"
+            
+            # 关键修复：2. 拉取远程最新的 main 分支内容，并尝试用 rebase 整合
+            git pull --rebase origin main
+            
+            # 关键修复：3. 恢复本地暂存的更改（新生成的结果文件）
+            git stash pop
+            
+            # 4. 重新添加并提交
+            git add "${OUTPUT_DIR_BASE}"
+            git commit -m "Auto: 📈 Filtered technical analysis results for ${DATE_SHANGHAI} [skip ci]"
+            
+            # 5. 推送
+            git push
+            echo "Successfully pushed analysis results."
+          else
+            echo "No changes to commit (results might be empty or unchanged)."
+          fi

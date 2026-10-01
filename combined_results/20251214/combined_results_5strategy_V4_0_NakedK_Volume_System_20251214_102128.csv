@@ -1,0 +1,5 @@
+code,name,Strategy_Type,Close,TurnoverRate,RSI6,KDJ_J,Breakout_Pattern,Limit_Up_Today,Final_Score,Strategy_Rank
+002579,中京电子,A_Strong_Pullback (中风险接力),11.89,12.07,63.168119885909135,48.834815503841895,False,False,9.18581102546543,1
+601799,星宇股份,A_Strong_Pullback (中风险接力),127.06,2.81,61.95919775493105,63.32960590966081,False,False,2.826532086683222,1
+002235,安妮股份,E_Leader_Restart (二次启动),12.85,44.17,76.64170853486691,82.67729613021092,False,False,5754.949252174621,3
+002725,跃岭股份,E_Leader_Restart (二次启动),19.08,36.42,65.24904050981003,78.97726653289135,False,False,4039.8290941243786,3

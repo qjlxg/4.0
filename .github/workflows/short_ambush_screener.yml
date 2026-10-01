@@ -1,0 +1,102 @@
+# .github/workflows/screener.yml
+
+name: 📈 Short Ambush Stock Screener & Push Results
+
+# 触发条件
+on:
+  # 1. 定时触发 (每天 18:00 北京时间/上海时间)
+  schedule:
+    # GitHub Actions 使用 UTC 时间。
+    # 北京时间 18:00 (CST, UTC+8) 对应 UTC 10:00。
+    - cron: '0 15 * * *'
+    
+  # 2. 手动运行触发 (允许在 UI 界面手动点击运行)
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: '手动运行的原因（例如：调试，盘后紧急筛选）'
+        required: false
+        default: 'Manual run by user'
+
+  # 3. 脚本或工作流文件变动时自动运行
+  push:
+    paths:
+      - 'short_ambush_screener.py' # 监控脚本名称
+      - 'stock_names.csv'          # 如果名称文件变动
+      - 'stock_data/**'            # 如果原始数据变动
+      - '.github/workflows/screener.yml' # 监控工作流自身变动
+    
+# 设置环境变量，用于确保 Python 脚本中的时间戳和时区正确
+env:
+  TZ: 'Asia/Shanghai'
+
+jobs:
+  screen_and_push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: ⬇️ Checkout Repository (Full History)
+        uses: actions/checkout@v4
+        # 必须深度检出（fetch-depth: 0）才能执行后续的 Git 推送操作
+        with:
+          fetch-depth: 0 
+          
+      - name: 🐍 Set up Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+          
+      - name: 📦 Install Required Python Libraries
+        run: |
+          # 安装必要的库：pandas, numpy用于数据处理；pytz用于时区处理
+          pip install pandas numpy pytz
+          
+      - name: ⚙️ Run Short Ambush Screener Script
+        id: run_script
+        run: |
+          # 运行脚本
+          python short_ambush_screener.py
+          
+          # 获取结果文件路径 (用于下一步的 Git 推送)
+          # 使用 'ls -t' 命令找到最新生成的文件路径
+          LATEST_FILE=$(ls -t screener_results/*/*/*.csv 2>/dev/null | head -1)
+          echo "LATEST_FILE=$LATEST_FILE" >> $GITHUB_ENV
+          
+          # 检查是否有结果文件生成，没有则跳过推送步骤
+          if [ -z "$LATEST_FILE" ]; then
+            echo "::notice file=short_ambush_screener.py::No stocks matched the criteria. Skipping push."
+          else
+            echo "New results file found: $LATEST_FILE"
+          fi
+          
+      - name: 🚀 Configure Git User
+        # 确保只有在成功生成文件后才执行配置和推送
+        if: success() && env.LATEST_FILE != '' 
+        run: |
+          # 配置 Git 用户信息，使用 GitHub Actions 机器人身份
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          
+      - name: 💾 Commit and Push New Results
+        if: success() && env.LATEST_FILE != ''
+        run: |
+          # 1. 添加结果文件和相关的目录结构
+          git add screener_results
+          
+          # 2. 检查是否有文件变动（避免空提交）
+          if git diff --cached --exit-code; then
+            echo "No changes detected. Skipping commit."
+          else
+            # 3. 提交变动
+            COMMIT_MESSAGE="[Screener BOT] Add results: $(basename ${{ env.LATEST_FILE }})"
+            git commit -m "$COMMIT_MESSAGE"
+            
+            # 【修复冲突的关键步骤】在推送前先拉取并变基 (Rebase)
+            # 这一步将解决远程仓库有新提交导致的冲突问题。
+            echo "Attempting to pull latest changes from remote before push..."
+            git pull origin main --rebase
+            
+            # 4. 推送到远程仓库
+            git push
+            echo "Results pushed successfully to repository."
+          fi
