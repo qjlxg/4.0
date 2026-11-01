@@ -1,0 +1,45 @@
+name: Strategy Deep Tracker
+
+on:
+  schedule:
+    # 北京时间 23:45 运行 (UTC 15:45)
+    - cron: '45 15 * * *'
+  push:
+    paths:
+      - 'strategy_full_tracker.py'
+      - '.github/workflows/strategy_tracker.yml'
+  workflow_dispatch: # 支持手动点击运行
+
+jobs:
+  track_and_report:
+    runs-on: ubuntu-latest
+    # 授予写入权限以提交更改
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Pandas
+        run: pip install pandas
+
+      - name: Run Analysis and Risk Warning
+        env:
+          TZ: 'Asia/Shanghai'
+        run: python strategy_full_tracker.py
+
+      - name: Commit and Push All Reports
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          # 添加所有生成的 CSV 文件 (包括详细追踪、汇总统计和风险预警)
+          git add *.csv
+          # 如果没有文件变化则优雅退出，避免报错
+          git commit -m "Auto-update: Deep Tracking & Risk Analysis $(date +'%Y-%m-%d %H:%M')" || exit 0
+          git push

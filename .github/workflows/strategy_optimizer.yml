@@ -1,0 +1,61 @@
+name: strategy_optimizer
+
+on:
+  schedule:
+    # 北京时间 23:30 运行
+    - cron: '30 15 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - 'strategy_optimizer.py'
+      - '.github/workflows/strategy_optimizer.yml'
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          pip install pandas numpy
+
+      - name: Run Strategy Optimizer
+        run: python strategy_optimizer.py
+
+      - name: Commit and Push Results
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # 1. 强制检查并添加生成的文件
+          # 包含特征明细表和核心摘要简报
+          files_to_add=""
+          [ -f "strategy_insight_report.csv" ] && files_to_add="$files_to_add strategy_insight_report.csv"
+          [ -f "insight_summary.txt" ] && files_to_add="$files_to_add insight_summary.txt"
+          
+          if [ -n "$files_to_add" ]; then
+            git add $files_to_add
+            
+            # 2. 提交更改，如果没有变化则退出
+            git commit -m "Auto Update: Insights & Summary [$(date +'%Y-%m-%d %H:%M')]" || exit 0
+            
+            # 3. 这里的 rebase 很关键，因为大文件处理期间可能远程已有新提交
+            git pull --rebase origin main
+            
+            # 4. 推送。如果这次依然报错，说明你的脚本采样没控制在 100MB 以内
+            git push origin main
+          else
+            echo "No output files found to commit."
+          fi

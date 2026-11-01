@@ -1,0 +1,3 @@
+code,name,Strategy_Type,Close,TurnoverRate,RSI6,KDJ_J,Breakout_Pattern,Limit_Up_Today,Final_Score,Strategy_Rank
+000586,汇源通信,E_Leader_Restart (二次启动),23.19,40.84,68.12437909973231,61.46676314588046,False,False,4729.739392136215,3
+000026,飞亚达,E_Leader_Restart (二次启动),16.2,7.03,78.56092495039772,69.8239440262488,False,False,938.8816140822031,3

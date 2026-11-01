@@ -1,0 +1,41 @@
+name: backtest_single_yang
+
+on:
+  workflow_dispatch:
+  push:
+    # 只要单阳脚本或此 YML 变动，立即触发
+    paths:
+      - 'backtest_single_yang.py'
+      - '.github/workflows/backtest_single_yang.yml'
+  schedule:
+    - cron: '30 11 * * *' # 每天北京时间 19:30 定时运行
+
+permissions:
+  contents: write
+
+jobs:
+  run-strategy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 环境配置
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 安装依赖
+        run: pip install pandas numpy pytz
+
+      - name: 执行单阳回测
+        run: python backtest_single_yang.py
+
+      - name: 自动推送结果
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          if [ -d "results/Single_Yang_Retrace" ]; then
+            git add results/Single_Yang_Retrace/*.csv
+            git diff --quiet && git diff --staged --quiet || (git commit -m "脚本变动/定时更新：单阳策略回测" && git push)
+          fi

@@ -1,0 +1,140 @@
+import pandas as pd
+import numpy as np
+import os
+import glob
+from datetime import datetime
+from multiprocessing import Pool, cpu_count
+
+# --- 配置 ---
+DATA_DIR = "stock_data"
+NAME_MAP_FILE = 'stock_names.csv'
+
+def calculate_indicators(df):
+    """手写核心指标，完全替代 pandas_ta 以消除环境依赖报错"""
+    # 确保列名为英文
+    close = df['Close']
+    high = df['High']
+    low = df['Low']
+    vol = df['Volume']
+
+    # MA 均线
+    df['MA5'] = close.rolling(5).mean()
+    df['MA20'] = close.rolling(20).mean()
+    df['MA5V'] = vol.rolling(5).mean()
+    df['MA3V'] = vol.rolling(3).mean()
+
+    # RSI (6)
+    delta = close.diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=6).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=6).mean()
+    rs = gain / loss
+    df['RSI6'] = 100 - (100 / (1 + rs))
+
+    # KDJ (9,3,3)
+    low_9 = low.rolling(9).min()
+    high_9 = high.rolling(9).max()
+    rsv = (close - low_9) / (high_9 - low_9) * 100
+    df['K'] = rsv.ewm(com=2).mean()
+    df['D'] = df['K'].ewm(com=2).mean()
+    
+    # MACD (12,26,9)
+    exp1 = close.ewm(span=12, adjust=False).mean()
+    exp2 = close.ewm(span=26, adjust=False).mean()
+    df['DIF'] = exp1 - exp2
+    df['DEA'] = df['DIF'].ewm(span=9, adjust=False).mean()
+    df['DIF_MA60'] = df['DIF'].rolling(60).mean()
+
+    # OBV
+    df['OBV'] = (np.sign(close.diff()) * vol).fillna(0).cumsum()
+    return df
+
+def is_strategy_c(df):
+    if len(df) < 65: return False
+    
+    df = calculate_indicators(df)
+    latest = df.iloc[-1]
+    prev = df.iloc[-2]
+
+    # 1. 价格过滤 (5-20元)
+    if not (5.0 <= latest['Close'] <= 20.0): return False
+
+    # 2. 趋势判断: MA5 向上且收盘价在 MA20 上方
+    # 计算MA5斜率
+    ma5_tail = df['MA5'].tail(5).values
+    slope = np.polyfit(np.arange(5), ma5_tail, 1)[0]
+    is_trend_up = (slope > 0) and (latest['Close'] > latest['MA20'])
+    if not is_trend_up: return False
+
+    # 3. 40日平台突破 (收盘价明确突破过去 40 日高点 1%)
+    n_days = 40
+    prev_high_40 = df['High'].iloc[-n_days:-1].max()
+    is_platform_breakout = (latest['Close'] > prev_high_40 * 1.01)
+
+    # 4. 量价共振 (2-4倍放量)
+    is_volume_confirm = (2.0 * latest['MA5V'] < latest['Volume'] < 4.0 * latest['MA5V']) and \
+                        (latest['MA3V'] >= latest['MA5V'])
+    is_obv_up = latest['OBV'] > prev['OBV']
+
+    # 5. 指标共振 (RSI>60, KDJ金叉, MACD零轴上金叉, DIF>DIF_MA60)
+    is_rsi_strong = (latest['RSI6'] > 60) and (latest['RSI6'] > prev['RSI6'])
+    is_kdj_golden = (latest['K'] > latest['D']) and (prev['K'] <= prev['D']) and (latest['K'] < 70)
+    is_macd_turn_strong = (latest['DIF'] > latest['DEA']) and (latest['DIF'] > -0.05)
+    is_macd_long_trend = latest['DIF'] > latest['DIF_MA60']
+
+    return (is_platform_breakout and is_volume_confirm and is_obv_up and 
+            is_rsi_strong and is_kdj_golden and is_macd_turn_strong and is_macd_long_trend)
+
+def process_file(file_path):
+    code = os.path.basename(file_path).split('.')[0]
+    # 硬过滤：只保留 60 (沪市主板) 和 00 (深市主板/中小板), 排除 30, 68 等
+    if not (code.startswith('60') or code.startswith('00')):
+        return None
+    
+    try:
+        df = pd.read_csv(file_path)
+        if len(df) < 65: return None
+        df.columns = df.columns.str.strip()
+        df.rename(columns={'日期':'Date','收盘': 'Close', '开盘': 'Open', '最高': 'High', '最低': 'Low', '成交量': 'Volume'}, inplace=True)
+        
+        if is_strategy_c(df):
+            return {"代码": code, "名称": "待匹配", "价格": round(df.iloc[-1]['Close'], 2)}
+    except:
+        return None
+
+def main():
+    if not os.path.exists(NAME_MAP_FILE):
+        print(f"找不到 {NAME_MAP_FILE}")
+        return
+
+    names_df = pd.read_csv(NAME_MAP_FILE, dtype={'code': str})
+    names_dict = dict(zip(names_df['code'].str.zfill(6), names_df['name']))
+
+    files = glob.glob(os.path.join(DATA_DIR, "*.csv"))
+    print(f"开始并行筛选 {len(files)} 个文件...")
+
+    with Pool(cpu_count()) as pool:
+        results = pool.map(process_file, files)
+
+    found = [r for r in results if r is not None]
+    
+    final_list = []
+    if found:
+        for item in found:
+            name = names_dict.get(item['代码'], "未知")
+            if "ST" in name or "退" in name: continue
+            item['名称'] = name
+            final_list.append(item)
+            
+    if final_list:
+        df_res = pd.DataFrame(final_list)
+        now = datetime.now()
+        dir_name = now.strftime("%Y-%m")
+        os.makedirs(dir_name, exist_ok=True)
+        save_name = os.path.join(dir_name, f"Strategy_C_{now.strftime('%Y%m%d_%H%M%S')}.csv")
+        df_res.to_csv(save_name, index=False, encoding='utf-8-sig')
+        print(f"🎯 成功发现 {len(df_res)} 只候选股: {save_name}")
+    else:
+        print("今日无符合 C 策略条件的个股。")
+
+if __name__ == "__main__":
+    main()

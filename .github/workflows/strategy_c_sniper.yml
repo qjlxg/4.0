@@ -1,0 +1,41 @@
+name: Strategy C Sniper Workflow
+
+on:
+  schedule:
+    - cron: '0 15 * * *' # 北京时间 23:00
+  push:
+    paths:
+      - 'strategy_c_sniper.py'
+      - '.github/workflows/strategy_c_sniper.yml'
+  workflow_dispatch:
+
+jobs:
+  snipe:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Base Libraries
+        run: pip install pandas numpy
+
+      - name: Run Sniper Script
+        env:
+          TZ: 'Asia/Shanghai'
+        run: python strategy_c_sniper.py
+
+      - name: Commit and Push to Archive
+        run: |
+          git config --local user.email "bot@github.com"
+          git config --local user.name "C-Strategy-Sniper"
+          git add "202*-*"/*.csv
+          git commit -m "Auto-Update C Strategy: $(date +'%Y-%m-%d %H:%M')" || exit 0
+          git push

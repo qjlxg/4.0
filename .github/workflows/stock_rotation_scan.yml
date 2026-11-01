@@ -1,0 +1,39 @@
+name: Stock Rotation Scan Workflow
+
+on:
+  schedule:
+    # 每天北京时间 23:00 (UTC 15:00)
+    - cron: '0 15 * * *'
+  workflow_dispatch: # 支持手动触发
+  push:
+    paths:
+      - 'stock_rotation_scan.py'
+      - '.github/workflows/stock_rotation_scan.yml'
+
+jobs:
+  run-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          pip install pandas numpy
+
+      - name: Run Stock Analysis
+        run: python stock_rotation_scan.py
+
+      - name: Commit and Push Report
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add 股票信号追踪明细.csv 策略逻辑胜率看板.csv
+          # 只有在文件有变动时才提交，防止报错
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update analysis report $(date +'%Y-%m-%d %H:%M')" && git push)

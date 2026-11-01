@@ -1,0 +1,48 @@
+name: Strategy C Deep Stats Workflow
+
+on:
+  # 触发条件 1：当脚本或工作流文件发生变动时自动运行
+  push:
+    paths:
+      - 'strategy_c_deep_stats.py'
+      - '.github/workflows/strategy_c_deep_stats.yml'
+  
+  # 触发条件 2：当回测工作流成功完成后自动联动运行
+  workflow_run:
+    workflows: ["Strategy C Backtest Workflow"]
+    types: [completed]
+  
+  # 触发条件 3：支持在 Actions 页面手动点击运行
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    # 仅在回测成功或手动/推送触发时执行
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Pandas
+        run: pip install pandas
+
+      - name: Run Deep Analysis
+        run: python strategy_c_deep_stats.py
+
+      - name: Push Analysis Report
+        run: |
+          git config --local user.email "analyst-bot@github.com"
+          git config --local user.name "C-Strategy-Analyst"
+          # 仅添加报告文件，不影响其他归档
+          git add backtest_reports/
+          git commit -m "Auto-Analysis: Script/Config Change Triggered" || exit 0
+          git push

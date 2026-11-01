@@ -1,0 +1,4 @@
+code,name,Strategy_Type,Close,TurnoverRate,RSI6,KDJ_J,Breakout_Pattern,Limit_Up_Today,Final_Score,Strategy_Rank
+601199,江南水务,A_Strong_Pullback (中风险接力),6.05,3.38,64.17091801721999,90.69767441860463,False,False,4.70391010072748,1
+600129,太极集团,E_Leader_Restart (二次启动),15.39,10.03,75.0968321307493,76.31898965232295,True,False,1280.4760846614063,3
+000524,岭南控股,E_Leader_Restart (二次启动),9.68,7.11,73.75765901231988,77.92289552589182,False,False,891.5088244819103,3

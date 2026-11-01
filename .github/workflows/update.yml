@@ -1,0 +1,100 @@
+name: up数据更新
+
+# 触发条件
+on:
+  push:
+    paths:
+      - 'update.py'        # 只有当脚本变动时触发
+      - '列表.txt'          # 只有当股票列表变动时触发
+      - '.github/workflows/update.yml' 
+  workflow_dispatch:      # 支持手动点击 "Run workflow" 按钮触发
+  schedule:
+    - cron: '25 7 * * *'  # 北京时间 15:15 自动运行（UTC 7:15）
+
+# 权限设置：必须开启 contents 的写入权限，gh 工具需要 actions 权限
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  update_data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. 检出代码
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1 # 获取完整历史以支持 rebase 推送
+
+      # 2. 设置 Python 环境
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      # 3. 安装必要依赖 (包含 Pytdx 和 pandas)
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pytdx
+
+      # 4. 运行股票数据更新脚本
+      - name: Run stock data update script
+        id: run_script
+        run: |
+          set +e  # 允许捕获非零退出码而不直接中止 job
+          echo "开始运行 Pytdx 数据更新脚本..."
+          sleep $(( ( RANDOM % 25 )  + 25 ))
+          python update.py
+          EXIT_CODE=$?
+          echo "脚本运行结束，退出码: $EXIT_CODE"
+          echo "status=$EXIT_CODE" >> $GITHUB_OUTPUT
+        
+      # 5. 提交并推送数据到仓库
+      - name: Commit and push changes
+        run: |
+          # 配置 Git 用户身份
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # 确保目录存在
+          mkdir -p stock_data results_data_update
+          
+          # 只有在文件夹不为空时才执行 git add，防止 pathspec 报错
+          if [ -n "$(ls -A stock_data/*.csv 2>/dev/null)" ]; then
+            git add stock_data/*.csv
+          fi
+          
+          if [ -f "results_data_update/progress.txt" ]; then
+            git add results_data_update/progress.txt
+          fi
+          
+          # 检查是否有实际的内容变动
+          if git diff --staged --quiet; then
+            echo "没有检测到任何数据变更，跳过提交。"
+          else
+            git commit -m "自动更新: 批次进度 ${{ steps.run_script.outputs.status }} [$(date +'%Y-%m-%d %H:%M')]"
+            
+            # 解决并发冲突：重试 5 次
+            for i in {1..5}; do
+              echo "正在尝试推送数据 (第 $i 次)..."
+              # 使用 rebase 保持提交历史整洁，-X theirs 处理进度文件冲突
+              if git pull --rebase -X theirs origin ${{ github.ref_name }} && git push origin ${{ github.ref_name }}; then
+                echo "数据已成功同步至仓库！"
+                break
+              fi
+              echo "推送失败，15秒后重试..."
+              sleep 15
+            done
+          fi
+          
+      # 6. 检查退出码：如果为 99，则通过 API 触发下一次工作流运行
+      - name: Self-Restart Workflow
+        if: steps.run_script.outputs.status == '99'
+        run: |
+          echo "检测到退出码 99：当前批次已完成，准备启动下一批次..."
+          # 使用 GITHUB_TOKEN 调用 gh 命令行工具触发自身
+          gh workflow run "up数据更新" --ref ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

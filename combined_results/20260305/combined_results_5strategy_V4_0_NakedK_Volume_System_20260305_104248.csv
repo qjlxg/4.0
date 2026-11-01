@@ -1,0 +1,4 @@
+code,name,Strategy_Type,Close,TurnoverRate,RSI6,KDJ_J,Breakout_Pattern,Limit_Up_Today,Final_Score,Strategy_Rank
+600028,中国石化,C_New_Strategy (最高共振),7.11,1.15,79.3362327780947,78.69713685316523,True,True,145.97866831169424,0
+000993,闽东电力,E_Leader_Restart (二次启动),14.0,13.59,72.30656274530041,81.8178285877095,False,False,1670.4985191046753,3
+000819,岳阳兴长,D_Strong_Breakout (高风险追涨/优化),17.48,9.6,72.76323501924283,71.00675788619054,True,False,768.3797618032042,4
